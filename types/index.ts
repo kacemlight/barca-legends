@@ -7,9 +7,10 @@
  * Trophy model — represents a competition trophy won by Barça
  */
 export interface Trophy {
+  _path?: string;
   title: string;
   year: number;
-  competition: 'la-liga' | 'copa-del-rey' | 'uefa-champions-league' | 'fifa-club-world-cup' | 'supercopa' | 'uefa-super-cup';
+  competition: 'la-liga' | 'copa-del-rey' | 'uefa-champions-league' | 'fifa-club-world-cup' | 'supercopa' | 'uefa-super-cup' | string;
 }
 
 /**
@@ -24,9 +25,10 @@ export interface AssetReference {
  * Legend model — represents a Barça player
  */
 export interface Legend {
+  _path?: string;
   name: string;
   nickname?: string;
-  position: 'goalkeeper' | 'defender' | 'midfielder' | 'forward';
+  position: 'goalkeeper' | 'defender' | 'midfielder' | 'forward' | string;
   era: string;
   bio: string;
   trophies: string[]; // Multi-value text field containing trophy titles
@@ -40,6 +42,7 @@ export interface Legend {
  * PageConfig model — global page configuration
  */
 export interface PageConfig {
+  _path?: string;
   pageTitle: string;
   heroHeadline: string;
   heroSubtext: string;
@@ -67,7 +70,7 @@ export interface LegendsListResponse {
 }
 
 /**
- * API response for single legend
+ * API response for single legend by path
  */
 export interface SingleLegendResponse {
   legendByPath: Legend | null;
@@ -83,8 +86,11 @@ export interface TrophiesListResponse {
 }
 
 /**
- * API response for page config
+ * API response for page config (list variant)
  */
 export interface PageConfigResponse {
-  pageConfigByPath: PageConfig | null;
+  pageConfigList?: {
+    items: PageConfig[];
+  };
+  pageConfigByPath?: PageConfig | null;
 }
