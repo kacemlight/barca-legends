@@ -1,1 +1,128 @@
-'use client';\n\nimport React, { useEffect, useState } from 'react';\nimport { Legend, PageConfig } from '@/types';\nimport { getAllLegends, getPageConfig } from '@/lib/aem';\nimport { HeroSection } from '@/components/HeroSection';\nimport { LegendCard } from '@/components/LegendCard';\n\nexport default function LegendsPage() {\n  const [legends, setLegends] = useState<Legend[]>([]);\n  const [pageConfig, setPageConfig] = useState<PageConfig | null>(null);\n  const [isLoading, setIsLoading] = useState(true);\n  const [legendsError, setLegendsError] = useState<string | null>(null);\n  const [pageError, setPageError] = useState<string | null>(null);\n\n  useEffect(() => {\n    async function loadData() {\n      setIsLoading(true);\n      setLegendsError(null);\n      setPageError(null);\n\n      // Load page config\n      try {\n        const config = await getPageConfig();\n        setPageConfig(config);\n      } catch (error) {\n        const errorMessage = error instanceof Error ? error.message : 'Failed to load page config';\n        console.error('Page config error:', errorMessage);\n        setPageError(errorMessage);\n      }\n\n      // Load legends\n      try {\n        const legendsData = await getAllLegends();\n        setLegends(legendsData);\n      } catch (error) {\n        const errorMessage = error instanceof Error ? error.message : 'Failed to load legends';\n        console.error('Legends error:', errorMessage);\n        setLegendsError(errorMessage);\n      }\n\n      setIsLoading(false);\n    }\n\n    loadData();\n  }, []);\n\n  return (\n    <div className=\"legends-page\">\n      <HeroSection config={pageConfig} isLoading={isLoading} error={pageError} />\n\n      <div className=\"legends-container\">\n        {isLoading ? (\n          <div className=\"loading\">\n            <p>Loading legends...</p>\n          </div>\n        ) : legendsError ? (\n          <div className=\"error-message\">\n            <h2>Error Loading Legends</h2>\n            <p>{legendsError}</p>\n            <p className=\"hint\">Make sure your AEM_HOST and GraphQL endpoint are correctly configured.</p>\n          </div>\n        ) : legends.length === 0 ? (\n          <div className=\"empty-message\">\n            <h2>No Legends Found</h2>\n            <p>No legend fragments are available at the moment.</p>\n          </div>\n        ) : (\n          <>\n            <h2 className=\"section-title\">The Greats</h2>\n            <div className=\"legends-grid\">\n              {legends.map((legend) => (\n                <LegendCard key={legend.name} legend={legend} />\n              ))}\n            </div>\n          </>\n        )}\n      </div>\n\n      <style jsx>{`\n        .legends-page {\n          min-height: 100vh;\n        }\n\n        .legends-container {\n          padding: 40px 0;\n        }\n\n        .section-title {\n          font-size: 2.5rem;\n          color: #004687;\n          margin-bottom: 30px;\n          text-align: center;\n        }\n\n        .legends-grid {\n          display: grid;\n          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));\n          gap: 25px;\n          margin-bottom: 40px;\n        }\n\n        .loading,\n        .error-message,\n        .empty-message {\n          text-align: center;\n          padding: 60px 20px;\n          background: white;\n          border-radius: 8px;\n          margin: 40px 0;\n        }\n\n        .error-message {\n          background: #ffe5e5;\n          border: 1px solid #ffcccc;\n          color: #c41e3a;\n        }\n\n        .error-message h2 {\n          color: #8b0000;\n          margin-bottom: 15px;\n        }\n\n        .hint {\n          font-size: 0.9rem;\n          color: #666;\n          margin-top: 15px;\n          font-style: italic;\n        }\n\n        .empty-message h2 {\n          color: #999;\n        }\n\n        .loading p,\n        .empty-message p {\n          color: #666;\n        }\n\n        @media (max-width: 768px) {\n          .legends-grid {\n            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));\n            gap: 15px;\n          }\n\n          .section-title {\n            font-size: 1.8rem;\n          }\n        }\n      `}</style>\n    </div>\n  );\n}\n"
+import React, { Suspense } from 'react';
+import { Metadata } from 'next';
+import { HeroSection } from '@/components/HeroSection';
+import { LegendCard } from '@/components/LegendCard';
+import { getAllLegends, getPageConfig } from '@/lib/aem';
+import { Legend, PageConfig } from '@/types';
+
+export const metadata: Metadata = {
+  title: 'Barça Legends | FC Barcelona',
+  description: 'Discover the greatest players in FC Barcelona history',
+};
+
+/**
+ * Home Page - Legends Listing
+ * Fetches all legends and page config from live AEM instance
+ */
+export default async function HomePage() {
+  let legends: Legend[] = [];
+  let pageConfig: PageConfig | null = null;
+  let legendsError: string | null = null;
+  let configError: string | null = null;
+
+  // Fetch all legends from AEM
+  try {
+    legends = await getAllLegends();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    legendsError = `Failed to load legends: ${errorMessage}`;
+    console.error(legendsError);
+  }
+
+  // Fetch page configuration from AEM
+  try {
+    pageConfig = await getPageConfig();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    configError = `Failed to load page config: ${errorMessage}`;
+    console.error(configError);
+  }
+
+  return (
+    <main>
+      {/* Hero Section with Page Config */}
+      <HeroSection config={pageConfig} error={configError} />
+
+      {/* Legends Grid */}
+      <section className="legends-section">
+        <div className="container">
+          {legendsError ? (
+            <div className="error-message">
+              <p>⚠️ {legendsError}</p>
+            </div>
+          ) : legends.length === 0 ? (
+            <div className="empty-state">
+              <p>No legends found. Please check your AEM configuration.</p>
+            </div>
+          ) : (
+            <>
+              <h2>Our Legends</h2>
+              <div className="legends-grid">
+                {legends.map((legend) => (
+                  <LegendCard key={legend._path || legend.name} legend={legend} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      <style jsx>{`
+        main {
+          min-height: 100vh;
+          background: #f5f5f5;
+        }
+
+        .legends-section {
+          padding: 40px 20px;
+        }
+
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        h2 {
+          font-size: 2rem;
+          font-weight: bold;
+          color: #004687;
+          margin-bottom: 30px;
+          text-align: center;
+        }
+
+        .legends-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 24px;
+        }
+
+        .error-message {
+          background: #fee;
+          border: 1px solid #f99;
+          border-radius: 8px;
+          padding: 16px;
+          color: #c33;
+          text-align: center;
+        }
+
+        .empty-state {
+          text-align: center;
+          padding: 40px 20px;
+          color: #999;
+          font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+          h2 {
+            font-size: 1.5rem;
+          }
+
+          .legends-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+          }
+        }
+      `}</style>
+    </main>
+  );
+}
