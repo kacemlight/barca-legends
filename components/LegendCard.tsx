@@ -1,1 +1,164 @@
-'use client';\n\nimport React from 'react';\nimport Link from 'next/link';\nimport { Legend } from '@/types';\nimport { legendToSlug } from '@/lib/aem';\n\ninterface LegendCardProps {\n  legend: Legend;\n}\n\n/**\n * LegendCard Component\n * Displays a player card in the listing view with name, position, era, and key stats\n */\nexport function LegendCard({ legend }: LegendCardProps) {\n  const slug = legendToSlug(legend.name);\n  const positionLabel = legend.position\n    .split('-')\n    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))\n    .join(' ');\n\n  return (\n    <Link href={`/legends/${slug}`}>\n      <article className=\"legend-card\">\n        {legend.photo?.(_publishUrl || legend.photo._path) && (\n          <div className=\"legend-image\">\n            <img\n              src={legend.photo._publishUrl || legend.photo._path}\n              alt={legend.name}\n              loading=\"lazy\"\n            />\n          </div>\n        )}\n        <div className=\"legend-content\">\n          <h3>{legend.name}</h3>\n          {legend.nickname && <p className=\"nickname\">'{legend.nickname}'</p>}\n          <p className=\"position\">{positionLabel}</p>\n          <p className=\"era\">{legend.era}</p>\n          <div className=\"stats\">\n            <div className=\"stat\">\n              <span className=\"value\">{legend.appearances}</span>\n              <span className=\"label\">Apps</span>\n            </div>\n            <div className=\"stat\">\n              <span className=\"value\">{legend.goals}</span>\n              <span className=\"label\">Goals</span>\n            </div>\n            {legend.nationality && (\n              <div className=\"stat\">\n                <span className=\"label\">{legend.nationality}</span>\n              </div>\n            )}\n          </div>\n        </div>\n      </article>\n      <style jsx>{`\n        .legend-card {\n          background: white;\n          border-radius: 8px;\n          overflow: hidden;\n          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);\n          transition: transform 0.3s ease, box-shadow 0.3s ease;\n          cursor: pointer;\n          display: flex;\n          flex-direction: column;\n          height: 100%;\n        }\n\n        .legend-card:hover {\n          transform: translateY(-4px);\n          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);\n        }\n\n        .legend-image {\n          width: 100%;\n          aspect-ratio: 1;\n          background: #f0f0f0;\n          overflow: hidden;\n        }\n\n        .legend-image img {\n          width: 100%;\n          height: 100%;\n          object-fit: cover;\n        }\n\n        .legend-content {\n          padding: 16px;\n          flex: 1;\n          display: flex;\n          flex-direction: column;\n        }\n\n        h3 {\n          margin: 0 0 6px 0;\n          font-size: 1.25rem;\n          font-weight: bold;\n          color: #004687;\n        }\n\n        .nickname {\n          margin: 0 0 8px 0;\n          font-size: 0.9rem;\n          color: #666;\n          font-style: italic;\n        }\n\n        .position {\n          margin: 0 0 4px 0;\n          font-size: 0.95rem;\n          font-weight: 600;\n          color: #333;\n        }\n\n        .era {\n          margin: 0 0 12px 0;\n          font-size: 0.85rem;\n          color: #999;\n        }\n\n        .stats {\n          display: flex;\n          gap: 12px;\n          margin-top: auto;\n          padding-top: 12px;\n          border-top: 1px solid #eee;\n        }\n\n        .stat {\n          flex: 1;\n          text-align: center;\n        }\n\n        .stat .value {\n          display: block;\n          font-size: 1.5rem;\n          font-weight: bold;\n          color: #004687;\n        }\n\n        .stat .label {\n          display: block;\n          font-size: 0.75rem;\n          color: #999;\n          text-transform: uppercase;\n          margin-top: 4px;\n        }\n\n        @media (max-width: 768px) {\n          h3 {\n            font-size: 1.1rem;\n          }\n\n          .legend-content {\n            padding: 12px;\n          }\n        }\n      `}</style>\n    </Link>\n  );\n}\n"
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { Legend } from '@/types';
+import { legendToSlug } from '@/lib/aem';
+
+interface LegendCardProps {
+  legend: Legend;
+}
+
+/**
+ * LegendCard Component
+ * Displays a player card in the listing view with name, position, era, and key stats
+ */
+export function LegendCard({ legend }: LegendCardProps) {
+  const slug = legendToSlug(legend.name);
+  const positionLabel = legend.position
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  const photoUrl = legend.photo?._publishUrl || legend.photo?._path;
+
+  return (
+    <Link href={`/legends/${slug}`}>
+      <article className="legend-card">
+        {photoUrl && (
+          <div className="legend-image">
+            <img
+              src={photoUrl}
+              alt={legend.name}
+              loading="lazy"
+            />
+          </div>
+        )}
+        <div className="legend-content">
+          <h3>{legend.name}</h3>
+          {legend.nickname && <p className="nickname">'{legend.nickname}'</p>}
+          <p className="position">{positionLabel}</p>
+          <p className="era">{legend.era}</p>
+          <div className="stats">
+            <div className="stat">
+              <span className="value">{legend.appearances}</span>
+              <span className="label">Apps</span>
+            </div>
+            <div className="stat">
+              <span className="value">{legend.goals}</span>
+              <span className="label">Goals</span>
+            </div>
+            {legend.nationality && (
+              <div className="stat">
+                <span className="label">{legend.nationality}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </article>
+      <style jsx>{`
+        .legend-card {
+          background: white;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        }
+
+        .legend-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .legend-image {
+          width: 100%;
+          aspect-ratio: 1;
+          background: #f0f0f0;
+          overflow: hidden;
+        }
+
+        .legend-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .legend-content {
+          padding: 16px;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        h3 {
+          margin: 0 0 6px 0;
+          font-size: 1.25rem;
+          font-weight: bold;
+          color: #004687;
+        }
+
+        .nickname {
+          margin: 0 0 8px 0;
+          font-size: 0.9rem;
+          color: #666;
+          font-style: italic;
+        }
+
+        .position {
+          margin: 0 0 4px 0;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .era {
+          margin: 0 0 12px 0;
+          font-size: 0.85rem;
+          color: #999;
+        }
+
+        .stats {
+          display: flex;
+          gap: 12px;
+          margin-top: auto;
+          padding-top: 12px;
+          border-top: 1px solid #eee;
+        }
+
+        .stat {
+          flex: 1;
+          text-align: center;
+        }
+
+        .stat .value {
+          display: block;
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: #004687;
+        }
+
+        .stat .label {
+          display: block;
+          font-size: 0.75rem;
+          color: #999;
+          text-transform: uppercase;
+          margin-top: 4px;
+        }
+
+        @media (max-width: 768px) {
+          h3 {
+            font-size: 1.1rem;
+          }
+
+          .legend-content {
+            padding: 12px;
+          }
+        }
+      `}</style>
+    </Link>
+  );
+}
