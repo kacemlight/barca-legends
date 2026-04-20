@@ -1,1 +1,106 @@
-/**\n * GraphQL query definitions for AEM Content Fragments\n * All queries follow AEM GraphQL naming conventions and field mappings\n */\n\n/**\n * Get all legend fragments\n */\nexport const GET_ALL_LEGENDS = `\n  query {\n    legendList(limit: 100) {\n      items {\n        name\n        nickname\n        position\n        era\n        bio\n        trophies\n        nationality\n        appearances\n        goals\n        photo {\n          _path\n          _publishUrl\n        }\n      }\n    }\n  }\n`;\n\n/**\n * Get a single legend by path/name\n * Requires fragment path parameter\n */\nexport const GET_LEGEND_BY_PATH = `\n  query GetLegendByPath($path: String!) {\n    legendByPath(_path: $path) {\n      name\n      nickname\n      position\n      era\n      bio\n      trophies\n      nationality\n      appearances\n      goals\n      photo {\n        _path\n        _publishUrl\n      }\n    }\n  }\n`;\n\n/**\n * Get all trophy fragments\n */\nexport const GET_ALL_TROPHIES = `\n  query {\n    trophyList(limit: 100) {\n      items {\n        title\n        year\n        competition\n      }\n    }\n  }\n`;\n\n/**\n * Get page configuration\n * Should return a single page config fragment\n */\nexport const GET_PAGE_CONFIG = `\n  query {\n    pageConfigByPath(_path: \"/content/dam/acssandboxemea02jcadev/barca-legends-page-config\") {\n      pageTitle\n      heroHeadline\n      heroSubtext\n      metaDescription\n    }\n  }\n`;\n\n/**\n * Alternative: Dynamic page config query if path may vary\n */\nexport const GET_PAGE_CONFIG_BY_PATH = `\n  query GetPageConfigByPath($path: String!) {\n    pageConfigByPath(_path: $path) {\n      pageTitle\n      heroHeadline\n      heroSubtext\n      metaDescription\n    }\n  }\n`;\n
+/**
+ * GraphQL query definitions for AEM Content Fragments
+ * All queries follow AEM GraphQL naming conventions and field mappings
+ * Model technical names: legend, trophy, page-config
+ */
+
+/**
+ * Get all legend fragments
+ */
+export const GET_ALL_LEGENDS = `
+  query {
+    legendList(limit: 100) {
+      items {
+        _path
+        name
+        nickname
+        position
+        era
+        bio
+        trophies
+        nationality
+        appearances
+        goals
+        photo {
+          _path
+          _publishUrl
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Get a single legend by path
+ * Requires fragment path parameter
+ * Example: /content/dam/acssandboxemea02jcadev/lionel-messi
+ */
+export const GET_LEGEND_BY_PATH = `
+  query GetLegendByPath($path: String!) {
+    legendByPath(_path: $path) {
+      _path
+      name
+      nickname
+      position
+      era
+      bio
+      trophies
+      nationality
+      appearances
+      goals
+      photo {
+        _path
+        _publishUrl
+      }
+    }
+  }
+`;
+
+/**
+ * Get all trophy fragments
+ */
+export const GET_ALL_TROPHIES = `
+  query {
+    trophyList(limit: 100) {
+      items {
+        _path
+        title
+        year
+        competition
+      }
+    }
+  }
+`;
+
+/**
+ * Get page configuration
+ * Queries the specific page-config fragment at the known path
+ */
+export const GET_PAGE_CONFIG = `
+  query {
+    pageConfigList(limit: 1) {
+      items {
+        _path
+        pageTitle
+        heroHeadline
+        heroSubtext
+        metaDescription
+      }
+    }
+  }
+`;
+
+/**
+ * Alternative: Get page config by explicit path if needed
+ */
+export const GET_PAGE_CONFIG_BY_PATH = `
+  query GetPageConfigByPath($path: String!) {
+    pageConfigByPath(_path: $path) {
+      _path
+      pageTitle
+      heroHeadline
+      heroSubtext
+      metaDescription
+    }
+  }
+`;
