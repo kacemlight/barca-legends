@@ -1,1 +1,111 @@
-'use client';\n\nimport React from 'react';\nimport { PageConfig } from '@/types';\n\ninterface HeroSectionProps {\n  config: PageConfig | null;\n  isLoading?: boolean;\n  error?: string | null;\n}\n\n/**\n * HeroSection Component\n * Displays page header with headline and subtext from PageConfig\n */\nexport function HeroSection({ config, isLoading = false, error = null }: HeroSectionProps) {\n  if (isLoading) {\n    return (\n      <section className=\"hero-section hero-skeleton\">\n        <div className=\"hero-content\">\n          <div className=\"skeleton-headline\"></div>\n          <div className=\"skeleton-text\"></div>\n        </div>\n      </section>\n    );\n  }\n\n  if (error) {\n    return (\n      <section className=\"hero-section hero-error\">\n        <div className=\"hero-content\">\n          <h1>FC Barcelona Legends</h1>\n          <p>Error loading page content: {error}</p>\n        </div>\n      </section>\n    );\n  }\n\n  if (!config) {\n    return (\n      <section className=\"hero-section\">\n        <div className=\"hero-content\">\n          <h1>FC Barcelona Legends</h1>\n          <p>Discover the greatest players in club history</p>\n        </div>\n      </section>\n    );\n  }\n\n  return (\n    <section className=\"hero-section\">\n      <div className=\"hero-content\">\n        <h1>{config.heroHeadline}</h1>\n        <p>{config.heroSubtext}</p>\n      </div>\n      <style jsx>{`\n        .hero-section {\n          background: linear-gradient(135deg, #004687 0%, #003d7a 100%);\n          color: white;\n          padding: 60px 20px;\n          text-align: center;\n          margin-bottom: 40px;\n        }\n\n        .hero-content {\n          max-width: 900px;\n          margin: 0 auto;\n        }\n\n        h1 {\n          font-size: 3rem;\n          font-weight: bold;\n          margin-bottom: 15px;\n        }\n\n        p {\n          font-size: 1.25rem;\n          margin: 0;\n          opacity: 0.95;\n        }\n\n        .hero-skeleton {\n          min-height: 200px;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n        }\n\n        .skeleton-headline {\n          height: 40px;\n          background: rgba(255, 255, 255, 0.2);\n          border-radius: 4px;\n          margin-bottom: 15px;\n          width: 60%;\n          margin-left: auto;\n          margin-right: auto;\n        }\n\n        .skeleton-text {\n          height: 20px;\n          background: rgba(255, 255, 255, 0.2);\n          border-radius: 4px;\n          width: 40%;\n          margin-left: auto;\n          margin-right: auto;\n        }\n\n        .hero-error {\n          background: linear-gradient(135deg, #8b0000 0%, #660000 100%);\n        }\n\n        @media (max-width: 768px) {\n          h1 {\n            font-size: 2rem;\n          }\n\n          p {\n            font-size: 1rem;\n          }\n        }\n      `}</style>\n    </section>\n  );\n}\n"
+'use client';
+
+import React from 'react';
+import { PageConfig } from '@/types';
+
+interface HeroSectionProps {
+  config: PageConfig | null;
+  error?: string | null;
+}
+
+/**
+ * HeroSection Component
+ * Displays page header with headline and subtext from PageConfig
+ */
+export function HeroSection({ config, error = null }: HeroSectionProps) {
+  if (error) {
+    return (
+      <section className="hero-section hero-error">
+        <div className="hero-content">
+          <h1>FC Barcelona Legends</h1>
+          <p>⚠️ {error}</p>
+        </div>
+        <style jsx>{`
+          .hero-section {
+            background: linear-gradient(135deg, #8b0000 0%, #660000 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            margin-bottom: 40px;
+          }
+
+          .hero-content {
+            max-width: 900px;
+            margin: 0 auto;
+          }
+
+          h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+          }
+
+          p {
+            font-size: 1.25rem;
+            margin: 0;
+            opacity: 0.95;
+          }
+
+          @media (max-width: 768px) {
+            h1 {
+              font-size: 2rem;
+            }
+
+            p {
+              font-size: 1rem;
+            }
+          }
+        `}</style>
+      </section>
+    );
+  }
+
+  // Default fallback if no config is provided
+  const headline = config?.heroHeadline || 'FC Barcelona Legends';
+  const subtext = config?.heroSubtext || 'Discover the greatest players in club history';
+
+  return (
+    <section className="hero-section">
+      <div className="hero-content">
+        <h1>{headline}</h1>
+        <p>{subtext}</p>
+      </div>
+      <style jsx>{`
+        .hero-section {
+          background: linear-gradient(135deg, #004687 0%, #003d7a 100%);
+          color: white;
+          padding: 60px 20px;
+          text-align: center;
+          margin-bottom: 40px;
+        }
+
+        .hero-content {
+          max-width: 900px;
+          margin: 0 auto;
+        }
+
+        h1 {
+          font-size: 3rem;
+          font-weight: bold;
+          margin-bottom: 15px;
+        }
+
+        p {
+          font-size: 1.25rem;
+          margin: 0;
+          opacity: 0.95;
+        }
+
+        @media (max-width: 768px) {
+          h1 {
+            font-size: 2rem;
+          }
+
+          p {
+            font-size: 1rem;
+          }
+        }
+      `}</style>
+    </section>
+  );
+}
