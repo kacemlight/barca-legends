@@ -20,39 +20,112 @@ import {
   GET_PAGE_CONFIG,
 } from './queries';
 
-// Validate required environment variables
 const AEM_HOST = process.env.NEXT_PUBLIC_AEM_HOST;
-const AEM_GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_AEM_GRAPHQL_ENDPOINT || '/content/graphql/global/endpoint.json';
 const AEM_AUTH = process.env.NEXT_PUBLIC_AEM_AUTH;
+const AEM_GRAPHQL_ENDPOINT_ENV = process.env.NEXT_PUBLIC_AEM_GRAPHQL_ENDPOINT;
 
 if (!AEM_HOST) {
   console.warn('⚠️  NEXT_PUBLIC_AEM_HOST environment variable is not set. Data fetching will fail at runtime.');
 }
 
-// Construct the full GraphQL endpoint URL
-const GRAPHQL_URL = `${AEM_HOST}${AEM_GRAPHQL_ENDPOINT}`;
-
 /**
- * Initialize GraphQL client with auth headers if needed
+ * Candidate GraphQL endpoint paths to try in order when no explicit
+ * NEXT_PUBLIC_AEM_GRAPHQL_ENDPOINT is configured. The first one that
+ * responds successfully is cached for the remainder of the process.
+ *
+ * AEM Cloud Service exposes Content Fragment GraphQL at
+ * /content/_cq_graphql/<configName>/endpoint.json once the endpoint is
+ * enabled on a configuration. Either "global" or a project-specific config
+ * name (here acssandboxemea02jcadev) is common, so we probe both.
  */
-function getAemClient(): GraphQLClient {
+const ENDPOINT_CANDIDATES = AEM_GRAPHQL_ENDPOINT_ENV
+  ? [AEM_GRAPHQL_ENDPOINT_ENV]
+  : [
+      '/content/_cq_graphql/acssandboxemea02jcadev/endpoint.json',
+      '/content/_cq_graphql/global/endpoint.json',
+      '/content/cq:graphql/acssandboxemea02jcadev/endpoint.json',
+      '/content/cq:graphql/global/endpoint.json',
+      '/content/graphql/global/endpoint.json',
+    ];
+
+let resolvedEndpoint: string | null = null;
+let endpointDiscoveryPromise: Promise<string> | null = null;
+
+function buildHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-
   if (AEM_AUTH) {
     headers['Authorization'] = `Bearer ${AEM_AUTH}`;
   }
-
-  return new GraphQLClient(GRAPHQL_URL, {
-    headers,
-  });
+  return headers;
 }
 
 /**
- * Fetch all legends from AEM
- * @throws Error if GraphQL query fails
+ * Attempt an introspection query against a candidate path. Returns the path
+ * if it responds with a valid GraphQL JSON payload, otherwise throws.
  */
+async function probeEndpoint(path: string): Promise<string> {
+  const url = `${AEM_HOST}${path}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify({ query: '{ __typename }' }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Unexpected content-type: ${contentType}`);
+  }
+
+  const payload = await response.json();
+  if (payload && typeof payload === 'object' && ('data' in payload || 'errors' in payload)) {
+    return path;
+  }
+  throw new Error('Response was not a GraphQL payload');
+}
+
+async function resolveEndpoint(): Promise<string> {
+  if (resolvedEndpoint) return resolvedEndpoint;
+  if (endpointDiscoveryPromise) return endpointDiscoveryPromise;
+
+  endpointDiscoveryPromise = (async () => {
+    const errors: string[] = [];
+    for (const candidate of ENDPOINT_CANDIDATES) {
+      try {
+        const path = await probeEndpoint(candidate);
+        resolvedEndpoint = path;
+        if (ENDPOINT_CANDIDATES.length > 1) {
+          console.info(`✅ Discovered AEM GraphQL endpoint at ${path}`);
+        }
+        return path;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        errors.push(`${candidate} -> ${msg}`);
+      }
+    }
+    throw new Error(
+      `No working AEM GraphQL endpoint found. Tried:\n  - ${errors.join('\n  - ')}\n` +
+        `Set NEXT_PUBLIC_AEM_GRAPHQL_ENDPOINT to the correct path.`,
+    );
+  })();
+
+  try {
+    return await endpointDiscoveryPromise;
+  } finally {
+    endpointDiscoveryPromise = null;
+  }
+}
+
+async function getAemClient(): Promise<GraphQLClient> {
+  const path = await resolveEndpoint();
+  return new GraphQLClient(`${AEM_HOST}${path}`, { headers: buildHeaders() });
+}
+
 export async function getAllLegends(): Promise<Legend[]> {
   if (!AEM_HOST) {
     console.error('❌ AEM_HOST not configured. Cannot fetch legends.');
@@ -60,9 +133,9 @@ export async function getAllLegends(): Promise<Legend[]> {
   }
 
   try {
-    const client = getAemClient();
+    const client = await getAemClient();
     const response = await client.request<LegendsListResponse>(GET_ALL_LEGENDS);
-    
+
     if (!response.legendList?.items) {
       console.warn('⚠️  No legends returned from AEM');
       return [];
@@ -76,11 +149,6 @@ export async function getAllLegends(): Promise<Legend[]> {
   }
 }
 
-/**
- * Fetch a single legend by AEM fragment path
- * @param path - Full AEM fragment path (e.g., /content/dam/acssandboxemea02jcadev/lionel-messi)
- * @throws Error if GraphQL query fails
- */
 export async function getLegendByPath(path: string): Promise<Legend | null> {
   if (!AEM_HOST) {
     console.error('❌ AEM_HOST not configured. Cannot fetch legend.');
@@ -88,9 +156,9 @@ export async function getLegendByPath(path: string): Promise<Legend | null> {
   }
 
   try {
-    const client = getAemClient();
+    const client = await getAemClient();
     const response = await client.request<SingleLegendResponse>(GET_LEGEND_BY_PATH, { path });
-    
+
     if (!response.legendByPath) {
       console.warn(`⚠️  No legend found at path: ${path}`);
       return null;
@@ -104,10 +172,6 @@ export async function getLegendByPath(path: string): Promise<Legend | null> {
   }
 }
 
-/**
- * Fetch all trophies from AEM
- * @throws Error if GraphQL query fails
- */
 export async function getAllTrophies(): Promise<Trophy[]> {
   if (!AEM_HOST) {
     console.error('❌ AEM_HOST not configured. Cannot fetch trophies.');
@@ -115,9 +179,9 @@ export async function getAllTrophies(): Promise<Trophy[]> {
   }
 
   try {
-    const client = getAemClient();
+    const client = await getAemClient();
     const response = await client.request<TrophiesListResponse>(GET_ALL_TROPHIES);
-    
+
     if (!response.trophyList?.items) {
       console.warn('⚠️  No trophies returned from AEM');
       return [];
@@ -131,10 +195,6 @@ export async function getAllTrophies(): Promise<Trophy[]> {
   }
 }
 
-/**
- * Fetch page configuration from AEM
- * @throws Error if GraphQL query fails
- */
 export async function getPageConfig(): Promise<PageConfig | null> {
   if (!AEM_HOST) {
     console.error('❌ AEM_HOST not configured. Cannot fetch page config.');
@@ -142,10 +202,9 @@ export async function getPageConfig(): Promise<PageConfig | null> {
   }
 
   try {
-    const client = getAemClient();
+    const client = await getAemClient();
     const response = await client.request<PageConfigResponse>(GET_PAGE_CONFIG);
-    
-    // Handle both direct object and list response
+
     if ('pageConfigList' in response && response.pageConfigList?.items?.[0]) {
       return response.pageConfigList.items[0];
     }
