@@ -20,12 +20,17 @@ import {
   GET_PAGE_CONFIG,
 } from './queries';
 
-const AEM_HOST = process.env.NEXT_PUBLIC_AEM_HOST;
+const DEFAULT_AEM_HOST = 'https://publish-p178261-e1872848.adobeaemcloud.com';
+
+const AEM_HOST = process.env.NEXT_PUBLIC_AEM_HOST || DEFAULT_AEM_HOST;
 const AEM_AUTH = process.env.NEXT_PUBLIC_AEM_AUTH;
 const AEM_GRAPHQL_ENDPOINT_ENV = process.env.NEXT_PUBLIC_AEM_GRAPHQL_ENDPOINT;
 
-if (!AEM_HOST) {
-  console.warn('⚠️  NEXT_PUBLIC_AEM_HOST environment variable is not set. Data fetching will fail at runtime.');
+if (!process.env.NEXT_PUBLIC_AEM_HOST) {
+  console.warn(
+    `⚠️  NEXT_PUBLIC_AEM_HOST not set; falling back to ${DEFAULT_AEM_HOST}. ` +
+      `Create a .env.local (see .env.local.example) and restart the dev server to override.`,
+  );
 }
 
 /**
