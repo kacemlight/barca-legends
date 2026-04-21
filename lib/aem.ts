@@ -78,20 +78,21 @@ async function probeEndpoint(path: string): Promise<string> {
     body: JSON.stringify({ query: '{ __typename }' }),
   });
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-
   const contentType = response.headers.get('content-type') || '';
-  if (!contentType.includes('application/json')) {
-    throw new Error(`Unexpected content-type: ${contentType}`);
+  if (contentType.includes('application/json')) {
+    const payload = await response.json().catch(() => null);
+    if (payload && typeof payload === 'object' && ('data' in payload || 'errors' in payload)) {
+      return path;
+    }
   }
 
-  const payload = await response.json();
-  if (payload && typeof payload === 'object' && ('data' in payload || 'errors' in payload)) {
-    return path;
+  // 409 from publish on a _cq_graphql path typically means the endpoint
+  // exists but isn't enabled/published for this configuration. Surface that
+  // hint so the error message points at the fix.
+  if (response.status === 409) {
+    throw new Error('HTTP 409 (endpoint config not enabled/published on this instance)');
   }
-  throw new Error('Response was not a GraphQL payload');
+  throw new Error(`HTTP ${response.status}`);
 }
 
 async function resolveEndpoint(): Promise<string> {
