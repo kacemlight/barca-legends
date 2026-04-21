@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { Metadata } from 'next';
 import { HeroSection } from '@/components/HeroSection';
 import { LegendCard } from '@/components/LegendCard';
@@ -20,7 +20,6 @@ export default async function HomePage() {
   let legendsError: string | null = null;
   let configError: string | null = null;
 
-  // Fetch all legends from AEM
   try {
     legends = await getAllLegends();
   } catch (error) {
@@ -29,7 +28,6 @@ export default async function HomePage() {
     console.error(legendsError);
   }
 
-  // Fetch page configuration from AEM
   try {
     pageConfig = await getPageConfig();
   } catch (error) {
@@ -39,11 +37,9 @@ export default async function HomePage() {
   }
 
   return (
-    <main>
-      {/* Hero Section with Page Config */}
+    <div className="home-main">
       <HeroSection config={pageConfig} error={configError} />
 
-      {/* Legends Grid */}
       <section className="legends-section">
         <div className="container">
           {legendsError ? (
@@ -66,63 +62,6 @@ export default async function HomePage() {
           )}
         </div>
       </section>
-
-      <style jsx>{`
-        main {
-          min-height: 100vh;
-          background: #f5f5f5;
-        }
-
-        .legends-section {
-          padding: 40px 20px;
-        }
-
-        .container {
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        h2 {
-          font-size: 2rem;
-          font-weight: bold;
-          color: #004687;
-          margin-bottom: 30px;
-          text-align: center;
-        }
-
-        .legends-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 24px;
-        }
-
-        .error-message {
-          background: #fee;
-          border: 1px solid #f99;
-          border-radius: 8px;
-          padding: 16px;
-          color: #c33;
-          text-align: center;
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 40px 20px;
-          color: #999;
-          font-size: 1.1rem;
-        }
-
-        @media (max-width: 768px) {
-          h2 {
-            font-size: 1.5rem;
-          }
-
-          .legends-grid {
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-          }
-        }
-      `}</style>
-    </main>
+    </div>
   );
 }
